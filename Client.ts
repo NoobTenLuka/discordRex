@@ -206,6 +206,7 @@ export class Client {
     switch (data.t) {
       case "READY":
         this._user = data.d.user as User;
+        handler();
         break;
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
