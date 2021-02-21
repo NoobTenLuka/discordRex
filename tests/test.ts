@@ -6,9 +6,9 @@ import { Client, ClientOptions } from "../Client.ts";
 
 Deno.test("[DiscordRex] create client with options", () => {
   const client = new Client();
-  const options: ClientOptions = { enableLogs: true };
+  const options: ClientOptions = { debug: true };
   const clientWithOptions = new Client(options);
 
-  assertEquals(clientWithOptions.options, options);
-  assertNotEquals(client.options, clientWithOptions.options);
+  assertEquals(clientWithOptions.options.debug, options.debug);
+  assertNotEquals(client.options.debug, clientWithOptions.options.debug);
 });
