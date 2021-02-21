@@ -204,24 +204,32 @@ export class Client {
     }
 
     switch (data.t) {
-      case "READY":
-        this._user = data.d.user as User;
+      case "READY": {
+        const user = (data.d.user as Record<string, unknown>);
+
+        this._user = new User(
+          user.id as string,
+          user.username as string,
+          user.descriminator as string,
+          user.avatar as string,
+        );
         handler();
         break;
+      }
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
       case "MESSAGE_DELETE": {
-        const user = (data.d.author as Record<string, unknown>);
+        const author = (data.d.author as Record<string, unknown>);
 
         handler(
           new Message(
             this,
             new User(
-              user.id as string,
-              user.username as string,
-              user.descriminator as string,
-              user.avatar as string | null,
-              user?.bot as boolean | undefined,
+              author.id as string,
+              author.username as string,
+              author.descriminator as string,
+              author.avatar as string | null,
+              author?.bot as boolean | undefined,
             ),
             new Channel(this, data.d.channel_id as string),
             data?.d.content as string,
