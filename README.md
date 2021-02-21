@@ -4,7 +4,7 @@ A deno library for interacting with the discord websocket gateway and http api.
 ## Technologies used
 
 The library is 100% written in [Typescript](https://www.typescriptlang.org/) with type notation for every exposed variable.
-Furthermore, the library is designed to be used with [Deno](https://deno.land/)
+Furthermore, the library is designed to be used with the [Deno](https://deno.land/) runtime
 
 Version used:
 * Deno: 1.7.4
