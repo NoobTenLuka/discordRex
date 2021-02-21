@@ -210,7 +210,7 @@ export class Client {
         this._user = new User(
           user.id as string,
           user.username as string,
-          user.descriminator as string,
+          user.discriminator as string,
           user.avatar as string,
         );
         handler();
