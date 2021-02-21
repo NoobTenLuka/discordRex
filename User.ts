@@ -1,4 +1,6 @@
 export class User {
+  public readonly tag = `${this.username}#${this.discriminator}`;
+
   constructor(
     readonly id: string,
     readonly username: string,

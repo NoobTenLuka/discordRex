@@ -57,14 +57,14 @@ export class Client {
     },
   };
 
-  private _currentUser: User | null = null;
+  private _user: User | null = null;
   private loggedIn = false;
 
   /**
    * Returns the current discord user that this client represents. 
    */
-  public get currentUser() {
-    return this._currentUser;
+  public get user() {
+    return this._user;
   }
 
   private webSocket!: WebSocket;
@@ -205,7 +205,7 @@ export class Client {
 
     switch (data.t) {
       case "READY":
-        this._currentUser = data.d.user as User;
+        this._user = data.d.user as User;
         break;
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
