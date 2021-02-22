@@ -29,7 +29,7 @@ export class User {
     if (typeof message === "string") {
       data = JSON.stringify({ content: message });
     } else if (Array.isArray(message)) {
-      data = JSON.stringify({ content: message.join("") });
+      data = JSON.stringify({ content: message.join("\n") });
     } else {
       data = JSON.stringify(message);
     }
