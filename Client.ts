@@ -216,7 +216,8 @@ export class Client {
       case "MESSAGE_DELETE": {
         const author = (data.d.author as Record<string, unknown>);
 
-        args.push(new Message(
+        args.push(
+          new Message(
             this,
             new User(
               author.id as string,
@@ -233,7 +234,8 @@ export class Client {
             data?.d.id as string,
             data?.d.tts as boolean,
             data?.d.type as MessageType,
-          ))
+          ),
+        );
         break;
       }
       case "GUILD_CREATE": {
@@ -250,17 +252,20 @@ export class Client {
           },
         );
 
+        const guild = new Guild(
+          data.d.id as string,
+          data.d.name as string,
+          new User(
+            data.d.owner_id as string,
+          ),
+          channelMap,
+        );
+
         this.guilds.set(
           data.d.id as string,
-          new Guild(
-            data.d.id as string,
-            data.d.name as string,
-            new User(
-              data.d.owner_id as string,
-            ),
-            channelMap,
-          ),
+          guild,
         );
+        args.push(guild);
         break;
       }
       default:
@@ -275,7 +280,7 @@ export class Client {
       return;
     }
 
-    if(args.length > 0) {
+    if (args.length > 0) {
       handler(...args);
     } else {
       handler();

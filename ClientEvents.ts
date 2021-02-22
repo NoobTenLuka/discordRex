@@ -1,3 +1,4 @@
+import { Guild } from "./Guild.ts";
 import { Message } from "./Message.ts";
 
 export interface ClientEvents {
@@ -5,7 +6,7 @@ export interface ClientEvents {
   RESUMED: [];
   VOICE_SERVER_UPDATE: [];
   USER_UPDATE: [];
-  GUILD_CREATE: [];
+  GUILD_CREATE: [Guild];
   GUILD_DELETE: [];
   GUILD_ROLE_CREATE: [];
   GUILD_ROLE_UPDATE: [];
