@@ -57,6 +57,8 @@ export class Client {
     },
   };
 
+  public guilds = new Map<string, Guild>();
+
   private _user: User | null = null;
   private loggedIn = false;
 
@@ -195,13 +197,7 @@ export class Client {
     data: { t: keyof ClientEvents; d: Record<string, unknown> },
   ) {
     const handler = this.handlers.get(data.t);
-
-    if (!handler) {
-      if (this._options.debug) {
-        console.log(`Handler for event ${String(data.t)} was not found!`);
-      }
-      return;
-    }
+    const args = [];
 
     switch (data.t) {
       case "READY": {
@@ -213,7 +209,6 @@ export class Client {
           user.discriminator as string,
           user.avatar as string,
         );
-        handler();
         break;
       }
       case "MESSAGE_CREATE":
@@ -221,8 +216,7 @@ export class Client {
       case "MESSAGE_DELETE": {
         const author = (data.d.author as Record<string, unknown>);
 
-        handler(
-          new Message(
+        args.push(new Message(
             this,
             new User(
               author.id as string,
@@ -239,13 +233,52 @@ export class Client {
             data?.d.id as string,
             data?.d.tts as boolean,
             data?.d.type as MessageType,
+          ))
+        break;
+      }
+      case "GUILD_CREATE": {
+        const channelMap = new Map<string, Channel>();
+        (data.d.channels as Record<string, unknown>[]).forEach(
+          (json_channel) => {
+            channelMap.set(
+              json_channel.id as string,
+              new Channel(
+                this,
+                json_channel.id as string,
+              ),
+            );
+          },
+        );
+
+        this.guilds.set(
+          data.d.id as string,
+          new Guild(
+            data.d.id as string,
+            data.d.name as string,
+            new User(
+              data.d.owner_id as string,
+            ),
+            channelMap,
           ),
         );
         break;
       }
       default:
-        handler();
         break;
+    }
+
+    if (!handler) {
+      if (this._options.debug) {
+        console.log(`Handler for event ${String(data.t)} was not found!`);
+      }
+
+      return;
+    }
+
+    if(args.length > 0) {
+      handler(...args);
+    } else {
+      handler();
     }
   }
 
@@ -320,15 +353,15 @@ export class Client {
     method: "GET" | "POST" | "DELETE",
     endpoint: string,
     body?: string,
-  ) {
+  ): Promise<Response | Error> {
     if (this.token === "") {
       if (this._options.debug) {
         console.log("Can't request the API without being logged in!");
       }
-      return;
+      return Promise.reject(new Error("The user is not logged in!"));
     }
 
-    fetch(
+    return fetch(
       `https://discord.com/api/v${this._options.httpOptions?.apiVersion}/${
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
