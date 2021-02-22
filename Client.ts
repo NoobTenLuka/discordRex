@@ -23,6 +23,9 @@ export interface ClientOptions {
 /**
  * The class of the discord client which registers event handlers (via `.registerHandler()`) 
  * and then executes them whenever the event is received (via `.login()`)
+ * 
+ * @alpha
+ * 
  * @example
  * // Example bot with a ping command
  * const client = new Client();
@@ -57,11 +60,13 @@ export class Client {
     },
   };
 
+  public guilds = new Map<string, Guild>();
+
   private _user: User | null = null;
   private loggedIn = false;
 
   /**
-   * Returns the current discord user that this client represents. 
+   * The current discord user that this client represents. 
    */
   public get user() {
     return this._user;
@@ -80,7 +85,7 @@ export class Client {
   private token = "";
 
   /**
-   * Returns the current options of this discord client
+   * The current options of this discord client
    * @default `Client.DEFAULT_OPTIONS`
    */
   public get options() {
@@ -162,7 +167,9 @@ export class Client {
     }
 
     // cache the last sequence number that the gateway has sent
-    this.lastSequenceNumber = data?.s;
+    if (data?.s !== null) {
+      this.lastSequenceNumber = data?.s;
+    }
 
     switch (data?.op) {
       // opcode 0 = Event
@@ -195,13 +202,7 @@ export class Client {
     data: { t: keyof ClientEvents; d: Record<string, unknown> },
   ) {
     const handler = this.handlers.get(data.t);
-
-    if (!handler) {
-      if (this._options.debug) {
-        console.log(`Handler for event ${String(data.t)} was not found!`);
-      }
-      return;
-    }
+    const args = [];
 
     switch (data.t) {
       case "READY": {
@@ -213,7 +214,6 @@ export class Client {
           user.discriminator as string,
           user.avatar as string,
         );
-        handler();
         break;
       }
       case "MESSAGE_CREATE":
@@ -221,7 +221,7 @@ export class Client {
       case "MESSAGE_DELETE": {
         const author = (data.d.author as Record<string, unknown>);
 
-        handler(
+        args.push(
           new Message(
             this,
             new User(
@@ -243,9 +243,87 @@ export class Client {
         );
         break;
       }
-      default:
-        handler();
+      case "GUILD_CREATE": {
+        const channelMap = new Map<string, Channel>();
+        (data.d.channels as Record<string, unknown>[]).forEach(
+          (json_channel) => {
+            channelMap.set(
+              json_channel.id as string,
+              new Channel(
+                this,
+                json_channel.id as string,
+              ),
+            );
+          },
+        );
+
+        const guild = new Guild(
+          data.d.id as string,
+          data.d.name as string,
+          new User(
+            data.d.owner_id as string,
+          ),
+          channelMap,
+        );
+
+        this.guilds.set(
+          data.d.id as string,
+          guild,
+        );
+        args.push(guild);
         break;
+      }
+      case "GUILD_DELETE":
+        args.push(this.guilds.get(data.d?.id as string));
+
+        this.guilds.delete(data.d?.id as string);
+        break;
+      case "CHANNEL_CREATE": {
+        const channel = new Channel(
+          this,
+          data.d.id as string,
+        );
+
+        if (data.d.guild_id) {
+          this.guilds.get(data.d.guild_id as string)?.channels?.set(
+            data.d.id as string,
+            channel,
+          );
+        }
+        args.push(channel);
+        break;
+      }
+      case "CHANNEL_DELETE": {
+        const channel = new Channel(
+          this,
+          data.d.id as string,
+        );
+
+        if (data.d.guild_id) {
+          this.guilds.get(data.d.guild_id as string)?.channels?.delete(
+            data.d.id as string,
+          );
+        }
+
+        args.push(channel);
+        break;
+      }
+      default:
+        break;
+    }
+
+    if (!handler) {
+      if (this._options.debug) {
+        console.log(`Handler for event ${String(data.t)} was not found!`);
+      }
+
+      return;
+    }
+
+    if (args.length > 0) {
+      handler(...args);
+    } else {
+      handler();
     }
   }
 
@@ -308,6 +386,7 @@ export class Client {
 
   /**
    * This method makes an HTTP request to the Discord API.
+   * @see {@link https://discord.com/developers/docs/intro} for a documentation of the API
    * 
    * Be aware!
    * This method is designed to be used internally but can also be used by the end user.
@@ -315,20 +394,22 @@ export class Client {
    * @param method The HTTP Method to be used on the API
    * @param endpoint The endpoint on the discord api
    * @param body The HTTP Body for the request
+   * 
+   * @returns A promise with an HTTP Response Object
    */
-  public useAPI(
+  public async useAPI(
     method: "GET" | "POST" | "DELETE",
     endpoint: string,
     body?: string,
-  ) {
+  ): Promise<Response> {
     if (this.token === "") {
       if (this._options.debug) {
         console.log("Can't request the API without being logged in!");
       }
-      return;
+      return Promise.reject(new Error("The user is not logged in!"));
     }
 
-    fetch(
+    const response = fetch(
       `https://discord.com/api/v${this._options.httpOptions?.apiVersion}/${
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
@@ -342,5 +423,16 @@ export class Client {
         body,
       },
     );
+
+    if (this._options.debug) {
+      try {
+        const res = await response;
+        console.log(res);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    return response;
   }
 }

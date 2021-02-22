@@ -6,7 +6,7 @@ export class Guild {
     readonly id: string,
     readonly name?: string,
     readonly owner?: User,
-    readonly channels?: Channel[],
+    readonly channels?: Map<string, Channel>,
   ) {
   }
 }

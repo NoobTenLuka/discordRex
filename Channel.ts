@@ -29,6 +29,6 @@ export class Channel {
       ? JSON.stringify({ content: message })
       : JSON.stringify(message);
 
-    this.client.useAPI("POST", `/channels/${this._id}/messages`, data);
+    return this.client.useAPI("POST", `/channels/${this._id}/messages`, data);
   }
 }
