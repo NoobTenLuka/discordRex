@@ -356,6 +356,7 @@ export class Client {
 
   /**
    * This method makes an HTTP request to the Discord API.
+   * @see {@link https://discord.com/developers/docs/intro} for a documentation of the API
    * 
    * Be aware!
    * This method is designed to be used internally but can also be used by the end user.
