@@ -1,5 +1,6 @@
-# Discord Rex
+# Discord Rex ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/NoobTenLuka/discordRex/Deno) ![GitHub](https://img.shields.io/github/license/NoobTenLuka/discordRex)
 DiscordRex is a library for the Deno runtime that makes it easier to work with the Discord WebSocket gateway and HTTP API.
+
 
 ## Technologies used
 
