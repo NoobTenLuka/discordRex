@@ -164,7 +164,9 @@ export class Client {
     }
 
     // cache the last sequence number that the gateway has sent
-    this.lastSequenceNumber = data?.s;
+    if(data?.s !== null) {
+      this.lastSequenceNumber = data?.s;
+    }
 
     switch (data?.op) {
       // opcode 0 = Event
@@ -354,11 +356,11 @@ export class Client {
    * @param endpoint The endpoint on the discord api
    * @param body The HTTP Body for the request
    */
-  public useAPI(
+  public async useAPI(
     method: "GET" | "POST" | "DELETE",
     endpoint: string,
     body?: string,
-  ): Promise<Response | Error> {
+  ): Promise<Response> {
     if (this.token === "") {
       if (this._options.debug) {
         console.log("Can't request the API without being logged in!");
@@ -366,7 +368,7 @@ export class Client {
       return Promise.reject(new Error("The user is not logged in!"));
     }
 
-    return fetch(
+    const response = fetch(
       `https://discord.com/api/v${this._options.httpOptions?.apiVersion}/${
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
@@ -380,5 +382,16 @@ export class Client {
         body,
       },
     );
+
+    if(this._options.debug) {
+      try {
+        const res = await response;
+        console.log(res);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    return response;
   }
 }

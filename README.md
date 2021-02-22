@@ -1,5 +1,5 @@
 # Discord Rex
-A deno library for interacting with the discord websocket gateway and http api.
+DiscordRex is a library for the Deno runtime that makes it easier to work with the Discord WebSocket gateway and HTTP API.
 
 ## Technologies used
 
