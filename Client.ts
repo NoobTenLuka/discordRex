@@ -23,6 +23,9 @@ export interface ClientOptions {
 /**
  * The class of the discord client which registers event handlers (via `.registerHandler()`) 
  * and then executes them whenever the event is received (via `.login()`)
+ * 
+ * @alpha
+ * 
  * @example
  * // Example bot with a ping command
  * const client = new Client();
@@ -63,7 +66,7 @@ export class Client {
   private loggedIn = false;
 
   /**
-   * Returns the current discord user that this client represents. 
+   * The current discord user that this client represents. 
    */
   public get user() {
     return this._user;
@@ -82,7 +85,7 @@ export class Client {
   private token = "";
 
   /**
-   * Returns the current options of this discord client
+   * The current options of this discord client
    * @default `Client.DEFAULT_OPTIONS`
    */
   public get options() {
@@ -164,7 +167,7 @@ export class Client {
     }
 
     // cache the last sequence number that the gateway has sent
-    if(data?.s !== null) {
+    if (data?.s !== null) {
       this.lastSequenceNumber = data?.s;
     }
 
@@ -270,6 +273,11 @@ export class Client {
         args.push(guild);
         break;
       }
+      case "GUILD_DELETE":
+        args.push(this.guilds.get(data.d?.id as string));
+
+        this.guilds.delete(data.d?.id as string);
+        break;
       default:
         break;
     }
@@ -355,6 +363,8 @@ export class Client {
    * @param method The HTTP Method to be used on the API
    * @param endpoint The endpoint on the discord api
    * @param body The HTTP Body for the request
+   * 
+   * @returns A promise with an HTTP Response Object
    */
   public async useAPI(
     method: "GET" | "POST" | "DELETE",
@@ -383,7 +393,7 @@ export class Client {
       },
     );
 
-    if(this._options.debug) {
+    if (this._options.debug) {
       try {
         const res = await response;
         console.log(res);
