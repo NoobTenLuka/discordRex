@@ -278,6 +278,36 @@ export class Client {
 
         this.guilds.delete(data.d?.id as string);
         break;
+      case "CHANNEL_CREATE": {
+        const channel = new Channel(
+          this,
+          data.d.id as string,
+        );
+
+        if (data.d.guild_id) {
+          this.guilds.get(data.d.guild_id as string)?.channels?.set(
+            data.d.id as string,
+            channel,
+          );
+        }
+        args.push(channel);
+        break;
+      }
+      case "CHANNEL_DELETE": {
+        const channel = new Channel(
+          this,
+          data.d.id as string,
+        );
+
+        if (data.d.guild_id) {
+          this.guilds.get(data.d.guild_id as string)?.channels?.delete(
+            data.d.id as string,
+          );
+        }
+
+        args.push(channel);
+        break;
+      }
       default:
         break;
     }
