@@ -12,23 +12,23 @@ export enum ChannelType {
 }
 
 export class Channel {
-  private client: Client;
-  private _id: string;
-
-  public get id() {
-    return this._id;
+  constructor(
+    readonly client: Client,
+    readonly id: string,
+  ) {
   }
 
-  constructor(discordClient: Client, id: string) {
-    this.client = discordClient;
-    this._id = id;
-  }
+  public send(message: string | string[] | MessageRequest): Promise<Response> {
+    let data = null;
 
-  public send(message: string | MessageRequest) {
-    const data = typeof message === "string"
-      ? JSON.stringify({ content: message })
-      : JSON.stringify(message);
+    if (typeof message === "string") {
+      data = JSON.stringify({ content: message });
+    } else if (Array.isArray(message)) {
+      data = JSON.stringify({ content: message.join("") });
+    } else {
+      data = JSON.stringify(message);
+    }
 
-    return this.client.useAPI("POST", `/channels/${this._id}/messages`, data);
+    return this.client.useAPI("POST", `/channels/${this.id}/messages`, data);
   }
 }

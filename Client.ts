@@ -209,6 +209,7 @@ export class Client {
         const user = (data.d.user as Record<string, unknown>);
 
         this._user = new User(
+          this,
           user.id as string,
           user.username as string,
           user.discriminator as string,
@@ -225,6 +226,7 @@ export class Client {
           new Message(
             this,
             new User(
+              this,
               author.id as string,
               author.username as string,
               author.descriminator as string,
@@ -261,6 +263,7 @@ export class Client {
           data.d.id as string,
           data.d.name as string,
           new User(
+            this,
             data.d.owner_id as string,
           ),
           channelMap,
