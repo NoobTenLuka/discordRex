@@ -42,6 +42,10 @@ export class User {
       data.append("file", file);
     }
 
+    if (this.client.options.debug) {
+      console.log(data);
+    }
+
     let res: null | Response = null;
 
     try {
