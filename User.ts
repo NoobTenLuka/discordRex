@@ -23,6 +23,7 @@ export class User {
 
   public async dm(
     message: string | string[] | MessageRequest,
+    file?: File,
   ): Promise<Response> {
     let data = null;
 
@@ -32,6 +33,13 @@ export class User {
       data = JSON.stringify({ content: message.join("\n") });
     } else {
       data = JSON.stringify(message);
+    }
+
+    if (file) {
+      const oldData = data;
+      data = new FormData();
+      data.append("payload_json", oldData);
+      data.append("file", file);
     }
 
     let res: null | Response = null;

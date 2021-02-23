@@ -437,7 +437,7 @@ export class Client {
   public async useAPI(
     method: "GET" | "POST" | "DELETE",
     endpoint: string,
-    body?: string,
+    body?: string | FormData,
   ): Promise<Response> {
     if (this.token === "") {
       if (this._options.debug) {
@@ -453,7 +453,9 @@ export class Client {
       {
         method,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": body instanceof FormData
+            ? "multipart/form-data"
+            : "application/json",
           "Authorization": `Bot ${this.token}`,
           "User-Agent":
             "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",

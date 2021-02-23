@@ -17,7 +17,10 @@ export class Channel {
     readonly type: ChannelType,
   ) {
   }
-  public send(message: string | string[] | MessageRequest): Promise<Response> {
+  public send(
+    message: string | string[] | MessageRequest,
+    file?: File,
+  ): Promise<Response> {
     let data = null;
 
     if (typeof message === "string") {
@@ -26,6 +29,13 @@ export class Channel {
       data = JSON.stringify({ content: message.join("\n") });
     } else {
       data = JSON.stringify(message);
+    }
+
+    if (file) {
+      const oldData = data;
+      data = new FormData();
+      data.append("payload_json", oldData);
+      data.append("file", file);
     }
 
     return this.client.useAPI("POST", `/channels/${this.id}/messages`, data);
