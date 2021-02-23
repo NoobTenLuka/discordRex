@@ -10,14 +10,13 @@ export enum ChannelType {
   NEWS,
   STROE,
 }
-
 export class Channel {
   constructor(
     readonly client: Client,
     readonly id: string,
+    readonly type: ChannelType,
   ) {
   }
-
   public send(message: string | string[] | MessageRequest): Promise<Response> {
     let data = null;
 

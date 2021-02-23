@@ -1,5 +1,5 @@
 import { unimplemented } from "https://deno.land/std@0.88.0/testing/asserts.ts";
-import { Channel } from "./Channel.ts";
+import { Channel, ChannelType } from "./Channel.ts";
 import { ClientEvents } from "./ClientEvents.ts";
 import { User } from "./User.ts";
 import { Message, MessageType } from "./Message.ts";
@@ -49,7 +49,7 @@ export class Client {
   /**
    * The default options of the discord client
    */
-  public static DEFAULT_OPTIONS: ClientOptions = {
+  public static DEFAULT_OPTIONS: Required<ClientOptions> = {
     debug: false,
     intents: 4609,
     httpOptions: {
@@ -80,7 +80,7 @@ export class Client {
   // deno-lint-ignore no-explicit-any
   private handlers = new Map<keyof ClientEvents, (...args: any) => void>();
 
-  private _options: ClientOptions;
+  private _options: Required<ClientOptions>;
 
   private token = "";
 
@@ -198,7 +198,7 @@ export class Client {
    * Handles incoming events from the discord gateway.
    * @param data A data object, where t is the event and d is the data for that event
    */
-  private handleEvent(
+  private async handleEvent(
     data: { t: keyof ClientEvents; d: Record<string, unknown> },
   ) {
     const handler = this.handlers.get(data.t);
@@ -221,6 +221,37 @@ export class Client {
       case "MESSAGE_UPDATE":
       case "MESSAGE_DELETE": {
         const author = (data.d.author as Record<string, unknown>);
+        const guild = this.guilds.get(data.d.guild_id as string);
+
+        let channel = undefined;
+
+        if (!guild) {
+          try {
+            const json = await (await this.useAPI(
+              "GET",
+              `/channels/${data.d.channel_id as string}`,
+            )).json();
+
+            channel = new Channel(
+              this,
+              json.id,
+              json.type,
+            );
+          } catch (err) {
+            console.error("There was an error fetching the channel", err);
+          }
+        } else {
+          channel = guild.channels?.get(
+            data.d.channel_id as string,
+          );
+        }
+
+        if (!channel) {
+          if (this._options.debug) {
+            console.log("Channel was not found!");
+          }
+          return;
+        }
 
         args.push(
           new Message(
@@ -233,7 +264,7 @@ export class Client {
               author.avatar as string | null,
               author?.bot as boolean | undefined,
             ),
-            new Channel(this, data.d.channel_id as string),
+            channel,
             data?.d.content as string,
             new Guild(
               data.d.guild_id as string,
@@ -254,6 +285,7 @@ export class Client {
               new Channel(
                 this,
                 json_channel.id as string,
+                json_channel.type as ChannelType,
               ),
             );
           },
@@ -285,6 +317,7 @@ export class Client {
         const channel = new Channel(
           this,
           data.d.id as string,
+          data.d.type as ChannelType,
         );
 
         if (data.d.guild_id) {
@@ -300,6 +333,7 @@ export class Client {
         const channel = new Channel(
           this,
           data.d.id as string,
+          data.d.type as ChannelType,
         );
 
         if (data.d.guild_id) {
@@ -413,7 +447,7 @@ export class Client {
     }
 
     const response = fetch(
-      `https://discord.com/api/v${this._options.httpOptions?.apiVersion}/${
+      `https://discord.com/api/v${this._options.httpOptions.apiVersion}/${
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
       {
@@ -421,7 +455,8 @@ export class Client {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bot ${this.token}`,
-          "User-Agent": "DiscordBot (none, 0.1)",
+          "User-Agent":
+            "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
         },
         body,
       },
