@@ -467,7 +467,7 @@ export class Client {
     if (this._options.debug) {
       try {
         const res = await response;
-        console.log(await res.json());
+        console.log(res);
       } catch (err) {
         console.log(err);
       }
