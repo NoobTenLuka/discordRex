@@ -446,20 +446,34 @@ export class Client {
       return Promise.reject(new Error("The user is not logged in!"));
     }
 
+    let headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Authorization": `Bot ${this.token}`,
+      "User-Agent":
+        "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
+    };
+
+    if (body instanceof FormData) {
+      const file = body.get("file");
+      if (file instanceof File) {
+        headers = {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bot ${this.token}`,
+          "User-Agent":
+            "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
+          "Content-Disposition":
+            `form-data; name="file"; filename=${file.name}`,
+        };
+      }
+    }
+
     const response = fetch(
       `https://discord.com/api/v${this._options.httpOptions.apiVersion}/${
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
       {
         method,
-        headers: {
-          "Content-Type": body instanceof FormData
-            ? "multipart/form-data"
-            : "application/json",
-          "Authorization": `Bot ${this.token}`,
-          "User-Agent":
-            "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
-        },
+        headers,
         body,
       },
     );
