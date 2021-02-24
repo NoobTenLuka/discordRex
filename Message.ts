@@ -51,7 +51,10 @@ export class Message {
    * Sends a reply to the message
    * @param message The message to be send in the reply
    */
-  public reply(message: string | string[], files: FileContent | FileContent[]) {
+  public reply(
+    message: string | string[],
+    files?: FileContent | FileContent[],
+  ) {
     let content = "";
 
     if (Array.isArray(message)) {
