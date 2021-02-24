@@ -261,6 +261,19 @@ export class Client {
           return;
         }
 
+        const mentions = (data.d.mentions as Record<string, unknown>[]).map(
+          (mention) => {
+            return new User(
+              this,
+              mention.id as string,
+              mention.username as string,
+              mention.discriminator as string,
+              mention.avatar as string | undefined,
+              mention.bot as boolean | undefined,
+            );
+          },
+        );
+
         args.push(
           new Message(
             this,
@@ -280,6 +293,7 @@ export class Client {
             data?.d.id as string,
             data?.d.tts as boolean,
             data?.d.type as MessageType,
+            mentions,
           ),
         );
         break;
@@ -466,6 +480,10 @@ export class Client {
         "Content-Type",
         "application/json",
       );
+    }
+
+    if (this._options.debug) {
+      console.log(method, headers, body);
     }
 
     const response = fetch(

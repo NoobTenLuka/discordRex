@@ -44,6 +44,7 @@ export class Message {
     readonly id: string,
     readonly tts: boolean,
     readonly type: MessageType,
+    readonly mentions: User[],
   ) {
   }
 

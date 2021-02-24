@@ -23,7 +23,7 @@ export class User {
   }
 
   public async dm(
-    message: string | string[] | MessageRequest,
+    message: string | string[],
     files?: FileContent | FileContent[],
   ): Promise<Response> {
     let channel: Channel | undefined;

@@ -61,7 +61,7 @@ export class Channel {
     return this.client.useAPI(
       "POST",
       `/channels/${this.id}/messages`,
-      JSON.stringify(data),
+      data instanceof FormData ? data : JSON.stringify(data),
     );
   }
 }
