@@ -1,4 +1,4 @@
-import { Channel } from "./Channel.ts";
+import { Channel, FileContent } from "./Channel.ts";
 import { Client } from "./Client.ts";
 import { Guild } from "./Guild.ts";
 import { User } from "./User.ts";
@@ -51,9 +51,17 @@ export class Message {
    * Sends a reply to the message
    * @param message The message to be send in the reply
    */
-  public reply(message: string) {
+  public reply(message: string | string[], files: FileContent | FileContent[]) {
+    let content = "";
+
+    if (Array.isArray(message)) {
+      content = message.join("\n");
+    } else {
+      content = message;
+    }
+
     const request: MessageRequest = {
-      content: message,
+      content,
       // deno-lint-ignore camelcase Parameter name is specified in the discord API
       message_reference: {
         message_id: this.id,
@@ -62,10 +70,6 @@ export class Message {
       },
     };
 
-    this.client.useAPI(
-      "POST",
-      `/channels/${this.channel.id}/messages`,
-      JSON.stringify(request),
-    );
+    return this.channel.send(request, files);
   }
 }

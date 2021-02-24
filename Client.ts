@@ -61,6 +61,14 @@ export class Client {
   };
 
   public guilds = new Map<string, Guild>();
+  /**
+   * All direct message channels the client has cached so far.
+   * The key references a user id
+   */
+  public directMessageChannels: Map<string, Channel> = new Map<
+    string,
+    Channel
+  >();
 
   private _user: User | null = null;
   private loggedIn = false;
@@ -446,25 +454,18 @@ export class Client {
       return Promise.reject(new Error("The user is not logged in!"));
     }
 
-    let headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Authorization": `Bot ${this.token}`,
-      "User-Agent":
-        "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
-    };
+    const headers: Headers = new Headers();
+    headers.set("Authorization", `Bot ${this.token}`);
+    headers.set(
+      "User-Agent",
+      "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
+    );
 
-    if (body instanceof FormData) {
-      const file = body.get("file");
-      if (file instanceof File) {
-        headers = {
-          "Content-Type": "multipart/form-data",
-          "Authorization": `Bot ${this.token}`,
-          "User-Agent":
-            "DiscordBot (https://github.com/NoobTenLuka/discordRex, 0.1)",
-          "Content-Disposition":
-            `form-data; name="file"; filename=${file.name}`,
-        };
-      }
+    if (!(body instanceof FormData)) {
+      headers.set(
+        "Content-Type",
+        "application/json",
+      );
     }
 
     const response = fetch(
@@ -472,9 +473,9 @@ export class Client {
         endpoint.startsWith("/") ? endpoint.substr(1) : endpoint
       }`,
       {
-        method,
-        headers,
-        body,
+        method: method,
+        headers: headers,
+        body: body,
       },
     );
 

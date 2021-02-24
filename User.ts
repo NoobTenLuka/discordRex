@@ -1,3 +1,4 @@
+import { Channel, FileContent } from "./Channel.ts";
 import { Client } from "./Client.ts";
 import { MessageRequest } from "./Message.ts";
 
@@ -23,55 +24,43 @@ export class User {
 
   public async dm(
     message: string | string[] | MessageRequest,
-    file?: File,
+    files?: FileContent | FileContent[],
   ): Promise<Response> {
-    let data = null;
+    let channel: Channel | undefined;
 
-    if (typeof message === "string") {
-      data = JSON.stringify({ content: message });
-    } else if (Array.isArray(message)) {
-      data = JSON.stringify({ content: message.join("\n") });
+    if (this.client.directMessageChannels.has(this.id)) {
+      channel = this.client.directMessageChannels.get(this.id);
     } else {
-      data = JSON.stringify(message);
+      let res = null;
+      try {
+        res = await this.client.useAPI(
+          "POST",
+          `users/@me/channels`,
+          JSON.stringify({ recipient_id: this.id }),
+        );
+
+        if (!res) {
+          return Promise.reject(
+            new Error(`Failed to open Direct Messages`),
+          );
+        }
+
+        const json = await res.json();
+
+        channel = new Channel(this.client, json.id, json.type);
+
+        this.client.directMessageChannels.set(this.id, channel);
+      } catch (error) {
+        return Promise.reject(
+          new Error(`Failed to open Direct Messages`),
+        );
+      }
     }
 
-    if (file) {
-      const oldData = data;
-      data = new FormData();
-      data.append("payload_json", oldData);
-      data.append("file", file);
+    if (!channel) {
+      return Promise.reject(new Error("Failed to open Direct Messages"));
     }
 
-    if (this.client.options.debug) {
-      console.log(data);
-    }
-
-    let res: null | Response = null;
-
-    try {
-      res = await this.client.useAPI(
-        "POST",
-        `users/@me/channels`,
-        JSON.stringify({ recipient_id: this.id }),
-      );
-    } catch (error) {
-      return Promise.reject(
-        new Error(`Failed to open Direct Messages`),
-      );
-    }
-
-    if (!res) {
-      return Promise.reject(
-        new Error(`Failed to open Direct Messages`),
-      );
-    }
-
-    const json = await res.json();
-
-    return this.client.useAPI(
-      "POST",
-      `/channels/${json.id}/messages`,
-      data,
-    );
+    return channel.send(message, files);
   }
 }

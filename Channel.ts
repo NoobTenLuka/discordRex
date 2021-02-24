@@ -10,6 +10,12 @@ export enum ChannelType {
   NEWS,
   STROE,
 }
+
+export interface FileContent {
+  blob: Blob;
+  name: string;
+}
+
 export class Channel {
   constructor(
     readonly client: Client,
@@ -19,25 +25,43 @@ export class Channel {
   }
   public send(
     message: string | string[] | MessageRequest,
-    file?: File,
+    files?: FileContent | FileContent[],
   ): Promise<Response> {
-    let data = null;
+    let data: MessageRequest | FormData | null = null;
 
     if (typeof message === "string") {
-      data = JSON.stringify({ content: message });
+      data = { content: message };
     } else if (Array.isArray(message)) {
-      data = JSON.stringify({ content: message.join("\n") });
+      data = { content: message.join("\n") };
     } else {
-      data = JSON.stringify(message);
+      data = message;
     }
 
-    if (file) {
+    if (files) {
+      if (!Array.isArray(files)) {
+        files = [files];
+      }
       const oldData = data;
       data = new FormData();
-      data.append("payload_json", oldData);
-      data.append("file", file);
+
+      files.forEach((file, index) => {
+        (data as FormData).append(
+          `file${index}`,
+          file.blob,
+          file.name,
+        );
+      });
+
+      data.append(
+        "payload_json",
+        JSON.stringify({ ...oldData, file: undefined }),
+      );
     }
 
-    return this.client.useAPI("POST", `/channels/${this.id}/messages`, data);
+    return this.client.useAPI(
+      "POST",
+      `/channels/${this.id}/messages`,
+      JSON.stringify(data),
+    );
   }
 }
