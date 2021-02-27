@@ -11,9 +11,48 @@ export enum ChannelType {
   STROE,
 }
 
-export interface FileContent {
-  blob: Blob;
-  name: string;
+export class FileContent {
+  public readonly blob: Blob;
+  public readonly name: string;
+
+  constructor(blob: Blob, name: string) {
+    this.blob = blob;
+    this.name = name;
+  }
+
+  public static async loadFile(
+    path: string | URL,
+    filename: string,
+  ): Promise<FileContent> {
+    let data: Uint8Array;
+
+    try {
+      data = await Deno.readFile(path);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+
+    return new FileContent(new Blob([data]), filename);
+  }
+
+  public static async loadFiles(
+    ...fileInfos: ({ path: string | URL; filename: string })[]
+  ) {
+    const promises = fileInfos.map((fileInfo) => {
+      return Deno.readFile(fileInfo.path);
+    });
+
+    let files: Uint8Array[] = [];
+    try {
+      files = await Promise.all(promises);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+
+    return files.map((file) => {
+      return new FileContent(new Blob([file]), "idk");
+    });
+  }
 }
 
 export class Channel {
